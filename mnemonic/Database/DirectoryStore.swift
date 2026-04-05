@@ -3,29 +3,29 @@ import Observation
 
 @Observable
 final class DirectoryStore {
-    private(set) var directories: [MnemonicDirectory] = []
-
-    let database: AppDatabase
-    private var cancellable: AnyDatabaseCancellable?
-
-    init(database: AppDatabase) {
-        self.database = database
-        startObservation()
+  private(set) var directories: [MnemonicDirectory] = []
+  
+  let database: AppDatabase
+  private var cancellable: AnyDatabaseCancellable?
+  
+  init(database: AppDatabase) {
+    self.database = database
+    startObservation()
+  }
+  
+  private func startObservation() {
+    let observation = ValueObservation.tracking { db in
+      try MnemonicDirectory
+        .order(Column("addedAt").desc)
+        .fetchAll(db)
     }
-
-    private func startObservation() {
-        let observation = ValueObservation.tracking { db in
-            try MnemonicDirectory
-                .order(Column("addedAt").desc)
-                .fetchAll(db)
-        }
-        cancellable = observation.start(
-            in: database.dbQueue,
-            scheduling: .immediate
-        ) { error in
-            print("DirectoryStore observation error: \(error)")
-        } onChange: { [weak self] directories in
-            self?.directories = directories
-        }
+    cancellable = observation.start(
+      in: database.dbQueue,
+      scheduling: .immediate
+    ) { error in
+      print("DirectoryStore observation error: \(error)")
+    } onChange: { [weak self] directories in
+      self?.directories = directories
     }
+  }
 }
