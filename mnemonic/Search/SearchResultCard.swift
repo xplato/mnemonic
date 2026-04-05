@@ -9,16 +9,20 @@ struct SearchResultCard: View {
       // Thumbnail
       if let thumbPath = result.thumbnailPath,
          let nsImage = NSImage(contentsOfFile: thumbPath) {
-        Image(nsImage: nsImage)
-          .resizable()
-          .aspectRatio(contentMode: .fill)
-          .frame(minWidth: 0, maxWidth: .infinity, minHeight: 110, maxHeight: 110)
-          .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+        Color.clear
+          .frame(minWidth: 0, maxWidth: .infinity, minHeight: 138, maxHeight: 138)
+          .overlay(alignment: .top) {
+            Image(nsImage: nsImage)
+              .resizable()
+              .aspectRatio(contentMode: .fill)
+              .frame(minWidth: 0, maxWidth: .infinity)
+          }
           .clipShape(RoundedRectangle(cornerRadius: 6))
+          .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
       } else {
         RoundedRectangle(cornerRadius: 6)
           .fill(.quaternary)
-          .frame(height: 110)
+          .frame(height: 138)
           .overlay {
             Image(systemName: "photo")
               .font(.title2)
@@ -33,8 +37,6 @@ struct SearchResultCard: View {
           .lineLimit(1)
           .truncationMode(.middle)
           .foregroundStyle(isHovering ? .primary : .secondary)
-        Spacer(minLength: 0)
-        RelevanceBadge(relevance: result.relevance)
       }
     }
     .padding(6)

@@ -3,8 +3,8 @@ import SwiftUI
 
 final class SearchPanel: NSPanel {
   
-  private let panelWidth: CGFloat = 600
-  private let maxPanelHeight: CGFloat = 500
+  private let panelWidth: CGFloat = 750
+  private let maxPanelHeight: CGFloat = 600
   private let cornerRadius: CGFloat = 12
   
   init(contentView swiftUIView: NSView) {

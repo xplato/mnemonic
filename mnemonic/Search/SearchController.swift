@@ -54,7 +54,7 @@ final class SearchController {
   // MARK: - Panel Height
 
   private static let searchBarHeight: CGFloat = 56
-  private static let maxResultsHeight: CGFloat = 400
+  private static let maxResultsHeight: CGFloat = 500
 
   /// Calculates the panel content height based on search state.
   /// Single source of truth used by both SwiftUI layout and panel resizing.
@@ -66,9 +66,9 @@ final class SearchController {
     if resultCount == 0 {
       height += 60 // "No matching files" message
     } else {
-      let columns = 3
+      let columns = 4
       let rows = ceil(Double(resultCount) / Double(columns))
-      height += min(CGFloat(rows) * 146 + 20, maxResultsHeight)
+      height += min(CGFloat(rows) * 174 + 20, maxResultsHeight)
     }
     return height
   }

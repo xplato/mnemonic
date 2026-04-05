@@ -4,7 +4,7 @@ struct SearchResultsView: View {
   let results: [SearchResult]
   
   private let columns = [
-    GridItem(.adaptive(minimum: 140, maximum: 180), spacing: 6)
+    GridItem(.adaptive(minimum: 160, maximum: 200), spacing: 6)
   ]
   
   var body: some View {
