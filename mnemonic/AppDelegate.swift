@@ -24,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     
     database = try! AppDatabase.makeShared()
     directoryStore = DirectoryStore(database: database)
+    searchController.database = database
     
     setupStatusItem()
     setupSearchPanel()

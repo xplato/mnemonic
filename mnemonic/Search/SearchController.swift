@@ -4,9 +4,11 @@ import Observation
 @Observable
 final class SearchController {
   var searchService: SearchService?
+  var database: AppDatabase?
   private(set) var results: [SearchResult] = []
   private(set) var isSearching = false
   private(set) var hasSearched = false
+  private(set) var selectedResult: SearchResult?
   
   private var searchTask: Task<Void, Never>?
   
@@ -44,11 +46,20 @@ final class SearchController {
     }
   }
   
+  func selectResult(_ result: SearchResult) {
+    selectedResult = result
+  }
+  
+  func deselectResult() {
+    selectedResult = nil
+  }
+  
   func clearResults() {
     searchTask?.cancel()
     results = []
     isSearching = false
     hasSearched = false
+    selectedResult = nil
   }
 
   // MARK: - Panel Height
@@ -56,9 +67,15 @@ final class SearchController {
   private static let searchBarHeight: CGFloat = 56
   private static let maxResultsHeight: CGFloat = 500
 
+  private static let detailViewHeight: CGFloat = 500
+
   /// Calculates the panel content height based on search state.
   /// Single source of truth used by both SwiftUI layout and panel resizing.
-  static func contentHeight(hasSearched: Bool, resultCount: Int) -> CGFloat {
+  static func contentHeight(hasSearched: Bool, resultCount: Int, isDetailView: Bool = false) -> CGFloat {
+    if isDetailView {
+      return detailViewHeight
+    }
+    
     var height = searchBarHeight
     guard hasSearched || resultCount > 0 else { return height }
 

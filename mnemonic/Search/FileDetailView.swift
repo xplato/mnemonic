@@ -1,10 +1,12 @@
 import SwiftUI
 import GRDB
+import Quartz
 
 struct FileDetailView: View {
     let result: SearchResult
     let database: AppDatabase
     let searchService: SearchService?
+    var heroNamespace: Namespace.ID
     var onBack: () -> Void = {}
     var onSelectResult: (SearchResult) -> Void = { _ in }
     
@@ -31,6 +33,16 @@ struct FileDetailView: View {
                     .truncationMode(.middle)
                 
                 Spacer()
+                
+                Button {
+                    openQuickLook()
+                } label: {
+                    Image(systemName: "eye")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Quick Look (Space)")
                 
                 Button {
                     revealInFinder()
@@ -66,6 +78,10 @@ struct FileDetailView: View {
                 similarFilesSection
             }
         }
+        .onKeyPress(.space) {
+            openQuickLook()
+            return .handled
+        }
         .task {
             await loadFileInfo()
             await loadSimilarFiles()
@@ -83,6 +99,7 @@ struct FileDetailView: View {
                 .aspectRatio(contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
                 .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 6))
+                .matchedGeometryEffect(id: result.id, in: heroNamespace)
         } else {
             RoundedRectangle(cornerRadius: 6)
                 .fill(.quaternary)
@@ -91,6 +108,7 @@ struct FileDetailView: View {
                         .font(.largeTitle)
                         .foregroundStyle(.secondary)
                 }
+                .matchedGeometryEffect(id: result.id, in: heroNamespace)
         }
     }
     
@@ -221,6 +239,22 @@ struct FileDetailView: View {
         }
     }
     
+    // MARK: - Quick Look
+    
+    private func openQuickLook() {
+        let coordinator = QuickLookCoordinator.shared
+        coordinator.previewURL = URL(fileURLWithPath: result.path) as NSURL
+        
+        if let panel = QLPreviewPanel.shared() {
+            panel.dataSource = coordinator
+            if panel.isVisible {
+                panel.reloadData()
+            } else {
+                panel.makeKeyAndOrderFront(nil)
+            }
+        }
+    }
+    
     // MARK: - Helpers
     
     private func revealInFinder() {
@@ -239,5 +273,27 @@ struct FileDetailView: View {
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
         return formatter.string(from: date)
+    }
+}
+
+// MARK: - Quick Look Coordinator
+
+final class QuickLookCoordinator: NSObject, QLPreviewPanelDataSource {
+    static let shared = QuickLookCoordinator()
+    var previewURL: NSURL?
+    
+    func numberOfPreviewItems(in panel: QLPreviewPanel!) -> Int {
+        previewURL != nil ? 1 : 0
+    }
+    
+    func previewPanel(_ panel: QLPreviewPanel!, previewItemAt index: Int) -> (any QLPreviewItem)! {
+        previewURL
+    }
+    
+    func dismiss() {
+        if let panel = QLPreviewPanel.shared(), panel.isVisible {
+            panel.orderOut(nil)
+        }
+        previewURL = nil
     }
 }

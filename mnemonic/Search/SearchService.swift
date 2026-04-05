@@ -71,6 +71,60 @@ final class SearchService: @unchecked Sendable {
     results.sort { $0.relevance > $1.relevance }
     return Array(results.prefix(50))
   }
+  /// Find files visually similar to a given file using embedding cosine similarity.
+  nonisolated func findSimilar(toFileId fileId: Int64, limit: Int = 4) async throws -> [SearchResult] {
+    // Load the target file's embedding
+    let targetRow: EmbeddingRow? = try await database.dbQueue.read { db in
+      try EmbeddingRow.fetchOne(db, sql: """
+        SELECT e.fileId, e.embedding, f.filename, f.path, f.thumbnailPath
+        FROM fileEmbeddings e
+        JOIN files f ON f.id = e.fileId
+        WHERE e.fileId = ?
+        """, arguments: [fileId])
+    }
+    
+    guard let target = targetRow else { return [] }
+    
+    let targetEmbedding: [Float] = target.embedding.withUnsafeBytes { buffer in
+      Array(buffer.bindMemory(to: Float.self))
+    }
+    
+    // Load all other embeddings
+    let rows: [EmbeddingRow] = try await database.dbQueue.read { db in
+      try EmbeddingRow.fetchAll(db, sql: """
+        SELECT e.fileId, e.embedding, f.filename, f.path, f.thumbnailPath
+        FROM fileEmbeddings e
+        JOIN files f ON f.id = e.fileId
+        WHERE e.fileId != ?
+        """, arguments: [fileId])
+    }
+    
+    // Compute similarity and find top N
+    var scored: [(SearchResult, Float)] = []
+    for row in rows {
+      let embedding: [Float] = row.embedding.withUnsafeBytes { buffer in
+        Array(buffer.bindMemory(to: Float.self))
+      }
+      guard embedding.count == targetEmbedding.count else { continue }
+      
+      var score: Float = 0
+      for i in 0..<targetEmbedding.count {
+        score += targetEmbedding[i] * embedding[i]
+      }
+      
+      scored.append((SearchResult(
+        id: row.fileId,
+        filename: row.filename,
+        path: row.path,
+        thumbnailPath: row.thumbnailPath,
+        rawScore: score,
+        relevance: score
+      ), score))
+    }
+    
+    scored.sort { $0.1 > $1.1 }
+    return Array(scored.prefix(limit).map(\.0))
+  }
 }
 
 // MARK: - Internal row type for the JOIN query

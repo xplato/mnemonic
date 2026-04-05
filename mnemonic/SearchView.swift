@@ -1,9 +1,11 @@
 import SwiftUI
+import Quartz
 
 struct SearchView: View {
 
   @State private var query: String = ""
   @FocusState private var isSearchFocused: Bool
+  @Namespace private var heroNamespace
   @Environment(SearchController.self) private var searchController
   @Environment(CLIPModelManager.self) private var modelManager
 
@@ -24,65 +26,91 @@ struct SearchView: View {
     // Subtract search bar + divider to get just the results portion
     return max(0, total - 57)
   }
+  
+  private var isDetailView: Bool {
+    searchController.selectedResult != nil
+  }
 
   var body: some View {
     VStack(spacing: 0) {
-      // Search bar
-      HStack(spacing: 12) {
-        Image(systemName: "magnifyingglass")
-          .font(.system(size: 18, weight: .medium))
-          .foregroundStyle(.secondary)
+      if let selected = searchController.selectedResult,
+         let database = searchController.database {
+        // Detail view
+        FileDetailView(
+          result: selected,
+          database: database,
+          searchService: searchController.searchService,
+          heroNamespace: heroNamespace,
+          onBack: {
+            QuickLookCoordinator.shared.dismiss()
+            searchController.deselectResult()
+          },
+          onSelectResult: { searchController.selectResult($0) }
+        )
+      } else {
+        // Search bar
+        HStack(spacing: 12) {
+          Image(systemName: "magnifyingglass")
+            .font(.system(size: 18, weight: .medium))
+            .foregroundStyle(.secondary)
 
-        TextField("Search your files...", text: $query)
-          .textFieldStyle(.plain)
-          .font(.system(size: 18))
-          .focused($isSearchFocused)
+          TextField("Search your files...", text: $query)
+            .textFieldStyle(.plain)
+            .font(.system(size: 18))
+            .focused($isSearchFocused)
 
-        if searchController.isSearching {
-          ProgressView()
-            .scaleEffect(0.6)
-        }
+          if searchController.isSearching {
+            ProgressView()
+              .scaleEffect(0.6)
+          }
 
-        // Indexing indicator
-        if let indexingService, indexingService.isIndexing {
+          // Indexing indicator
+          if let indexingService, indexingService.isIndexing {
+            Button {
+              onOpenSettings()
+            } label: {
+              IndexingIndicator(progress: indexingService.progress)
+            }
+            .buttonStyle(.plain)
+            .help("Indexing in progress — click to view details")
+          }
+
+          // Settings button
           Button {
             onOpenSettings()
           } label: {
-            IndexingIndicator(progress: indexingService.progress)
+            Image(systemName: "gearshape")
+              .font(.system(size: 14, weight: .medium))
+              .foregroundStyle(.secondary)
           }
           .buttonStyle(.plain)
-          .help("Indexing in progress — click to view details")
+          .help("Settings")
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
 
-        // Settings button
-        Button {
-          onOpenSettings()
-        } label: {
-          Image(systemName: "gearshape")
-            .font(.system(size: 14, weight: .medium))
-            .foregroundStyle(.secondary)
+        // Results
+        if !searchController.results.isEmpty || searchController.hasSearched {
+          Divider()
+          SearchResultsView(results: searchController.results, heroNamespace: heroNamespace)
+            .frame(height: resultsHeight)
+            .clipped()
+            .transition(.opacity)
         }
-        .buttonStyle(.plain)
-        .help("Settings")
-      }
-      .padding(.horizontal, 16)
-      .padding(.vertical, 14)
-
-      // Results
-      if !searchController.results.isEmpty || searchController.hasSearched {
-        Divider()
-        SearchResultsView(results: searchController.results)
-          .frame(height: resultsHeight)
-          .clipped()
-          .transition(.opacity)
       }
     }
     .animation(.easeOut(duration: 0.25), value: searchController.hasSearched)
     .animation(.easeOut(duration: 0.25), value: searchController.results.count)
+    .animation(.spring(duration: 0.35, bounce: 0.15), value: isDetailView)
     .onAppear {
       isSearchFocused = true
     }
     .onKeyPress(.escape) {
+      if isDetailView {
+        QuickLookCoordinator.shared.dismiss()
+        searchController.deselectResult()
+        return .handled
+      }
       if query.isEmpty {
         onDismiss()
       } else {
@@ -95,15 +123,22 @@ struct SearchView: View {
       searchController.search(query: newValue)
     }
     .onChange(of: searchController.results.count) { _, newCount in
-      notifyHeightChange(resultCount: newCount, hasSearched: searchController.hasSearched)
+      notifyHeightChange()
     }
-    .onChange(of: searchController.hasSearched) { _, newValue in
-      notifyHeightChange(resultCount: searchController.results.count, hasSearched: newValue)
+    .onChange(of: searchController.hasSearched) { _, _ in
+      notifyHeightChange()
+    }
+    .onChange(of: searchController.selectedResult?.id) { _, _ in
+      notifyHeightChange()
     }
   }
 
-  private func notifyHeightChange(resultCount: Int, hasSearched: Bool) {
-    onHeightChange(SearchController.contentHeight(hasSearched: hasSearched, resultCount: resultCount))
+  private func notifyHeightChange() {
+    onHeightChange(SearchController.contentHeight(
+      hasSearched: searchController.hasSearched,
+      resultCount: searchController.results.count,
+      isDetailView: isDetailView
+    ))
   }
 }
 

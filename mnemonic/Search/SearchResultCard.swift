@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SearchResultCard: View {
   let result: SearchResult
+  var heroNamespace: Namespace.ID
+  @Environment(SearchController.self) private var searchController
   @State private var isHovering = false
   
   var body: some View {
@@ -19,6 +21,7 @@ struct SearchResultCard: View {
           }
           .clipShape(RoundedRectangle(cornerRadius: 6))
           .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
+          .matchedGeometryEffect(id: result.id, in: heroNamespace)
       } else {
         RoundedRectangle(cornerRadius: 6)
           .fill(.quaternary)
@@ -28,6 +31,7 @@ struct SearchResultCard: View {
               .font(.title2)
               .foregroundStyle(.secondary)
           }
+          .matchedGeometryEffect(id: result.id, in: heroNamespace)
       }
       
       // File info
@@ -48,13 +52,8 @@ struct SearchResultCard: View {
       isHovering = hovering
     }
     .onTapGesture {
-      revealInFinder()
+      searchController.selectResult(result)
     }
     .help(result.path)
-  }
-  
-  private func revealInFinder() {
-    let url = URL(fileURLWithPath: result.path)
-    NSWorkspace.shared.activateFileViewerSelecting([url])
   }
 }
