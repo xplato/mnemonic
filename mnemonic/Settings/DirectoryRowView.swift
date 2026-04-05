@@ -22,6 +22,9 @@ struct DirectoryRowView: View {
 
             Spacer()
 
+            IndexingProgressView(directory: directory)
+                .frame(width: 120)
+
             Toggle("Watch", isOn: Binding(
                 get: { directory.watch },
                 set: { newValue in

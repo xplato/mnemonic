@@ -4,12 +4,13 @@ import SwiftUI
 final class SearchPanel: NSPanel {
 
     private let panelWidth: CGFloat = 600
-    private let panelHeight: CGFloat = 56
+    private let maxPanelHeight: CGFloat = 500
     private let cornerRadius: CGFloat = 12
+    private var hostingView: NSView?
 
     init(contentView swiftUIView: NSView) {
         super.init(
-            contentRect: NSRect(x: 0, y: 0, width: panelWidth, height: panelHeight),
+            contentRect: NSRect(x: 0, y: 0, width: panelWidth, height: 56),
             styleMask: [.borderless, .nonactivatingPanel, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -26,8 +27,10 @@ final class SearchPanel: NSPanel {
         titleVisibility = .hidden
         titlebarAppearsTransparent = true
 
+        let initialFrame = NSRect(x: 0, y: 0, width: panelWidth, height: 56)
+
         // Rounded visual effect background
-        let visualEffect = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: panelWidth, height: panelHeight))
+        let visualEffect = NSVisualEffectView(frame: initialFrame)
         visualEffect.material = .hudWindow
         visualEffect.blendingMode = .behindWindow
         visualEffect.state = .active
@@ -37,10 +40,11 @@ final class SearchPanel: NSPanel {
         visualEffect.autoresizingMask = [.width, .height]
 
         // SwiftUI hosting view on top
-        swiftUIView.frame = NSRect(x: 0, y: 0, width: panelWidth, height: panelHeight)
+        swiftUIView.frame = initialFrame
         swiftUIView.autoresizingMask = [.width, .height]
+        self.hostingView = swiftUIView
 
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: panelWidth, height: panelHeight))
+        let container = NSView(frame: initialFrame)
         container.wantsLayer = true
         container.layer?.cornerRadius = cornerRadius
         container.layer?.masksToBounds = true
@@ -49,6 +53,15 @@ final class SearchPanel: NSPanel {
         container.addSubview(swiftUIView)
 
         contentView = container
+
+        // Observe hosting view's intrinsic content size to resize panel dynamically
+        swiftUIView.postsFrameChangedNotifications = true
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(hostingViewDidResize),
+            name: NSView.frameDidChangeNotification,
+            object: swiftUIView
+        )
     }
 
     override var canBecomeKey: Bool { true }
@@ -58,8 +71,25 @@ final class SearchPanel: NSPanel {
         guard let screen = NSScreen.main else { return }
         let screenFrame = screen.visibleFrame
         let x = screenFrame.midX - frame.width / 2
-        // Position in the upper third of the screen, like Spotlight
         let y = screenFrame.midY + screenFrame.height / 6
         setFrameOrigin(NSPoint(x: x, y: y))
+    }
+
+    @objc private func hostingViewDidResize(_ notification: Notification) {
+        guard let hostingView else { return }
+        let fittingSize = hostingView.fittingSize
+        let newHeight = min(max(fittingSize.height, 56), maxPanelHeight)
+
+        if abs(frame.height - newHeight) > 1 {
+            let newOrigin = NSPoint(
+                x: frame.origin.x,
+                y: frame.origin.y + frame.height - newHeight
+            )
+            setFrame(
+                NSRect(x: newOrigin.x, y: newOrigin.y, width: panelWidth, height: newHeight),
+                display: true,
+                animate: false
+            )
+        }
     }
 }

@@ -4,7 +4,7 @@ struct MenuBarView: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        Button("Toggle Search") {
+        Button("Open Search") {
             NSApp.sendAction(#selector(AppDelegate.togglePanel), to: nil, from: nil)
         }
         .keyboardShortcut("f", modifiers: [.command, .shift])

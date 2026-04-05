@@ -4,8 +4,11 @@ import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
-    private var searchPanel: SearchPanel!
+    private var searchPanel: SearchPanel?
     private var hotKeyRef: EventHotKeyRef?
+
+    /// Shared search controller — created eagerly, wired to SearchService later.
+    let searchController = SearchController()
 
     // MARK: - Lifecycle
 
@@ -15,12 +18,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         registerGlobalHotKey()
     }
 
-    // MARK: - Search Panel
-
     private func setupSearchPanel() {
         let searchView = SearchView(onDismiss: { [weak self] in
             self?.hidePanel()
         })
+        .environment(searchController)
+
         let hostingView = NSHostingView(rootView: searchView)
         hostingView.layer?.backgroundColor = .clear
 
@@ -28,6 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func togglePanel() {
+        guard let searchPanel else { return }
         if searchPanel.isVisible {
             hidePanel()
         } else {
@@ -36,13 +40,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showPanel() {
-        searchPanel.centerOnScreen()
-        searchPanel.makeKeyAndOrderFront(nil)
+        searchPanel?.centerOnScreen()
+        searchPanel?.makeKeyAndOrderFront(nil)
         NSApp.activate()
     }
 
     private func hidePanel() {
-        searchPanel.orderOut(nil)
+        searchPanel?.orderOut(nil)
     }
 
     // MARK: - Global Hot Key (Cmd+Shift+Space)

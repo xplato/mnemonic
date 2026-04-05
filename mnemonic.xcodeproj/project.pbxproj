@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		6A4E99072F82107A000C1B31 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 6A4E99062F82107A000C1B31 /* GRDB */; };
+		6A4E992D2F8215F9000C1B31 /* onnxruntime in Frameworks */ = {isa = PBXBuildFile; productRef = 6A4E992C2F8215F9000C1B31 /* onnxruntime */; };
+		6A4E99302F82164E000C1B31 /* Tokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = 6A4E992F2F82164E000C1B31 /* Tokenizers */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +29,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6A4E992D2F8215F9000C1B31 /* onnxruntime in Frameworks */,
 				6A4E99072F82107A000C1B31 /* GRDB in Frameworks */,
+				6A4E99302F82164E000C1B31 /* Tokenizers in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,6 +75,8 @@
 			name = mnemonic;
 			packageProductDependencies = (
 				6A4E99062F82107A000C1B31 /* GRDB */,
+				6A4E992C2F8215F9000C1B31 /* onnxruntime */,
+				6A4E992F2F82164E000C1B31 /* Tokenizers */,
 			);
 			productName = mnemonic;
 			productReference = 6AE6535E2F82085D000FF811 /* mnemonic.app */;
@@ -102,6 +108,8 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				6A4E99052F82107A000C1B31 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
+				6A4E992B2F8215F9000C1B31 /* XCRemoteSwiftPackageReference "onnxruntime-swift-package-manager" */,
+				6A4E992E2F82164E000C1B31 /* XCRemoteSwiftPackageReference "swift-transformers" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6AE6535F2F82085D000FF811 /* Products */;
@@ -344,6 +352,22 @@
 				minimumVersion = 7.0.0;
 			};
 		};
+		6A4E992B2F8215F9000C1B31 /* XCRemoteSwiftPackageReference "onnxruntime-swift-package-manager" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/microsoft/onnxruntime-swift-package-manager";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.24.2;
+			};
+		};
+		6A4E992E2F82164E000C1B31 /* XCRemoteSwiftPackageReference "swift-transformers" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/huggingface/swift-transformers";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -351,6 +375,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 6A4E99052F82107A000C1B31 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
 			productName = GRDB;
+		};
+		6A4E992C2F8215F9000C1B31 /* onnxruntime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6A4E992B2F8215F9000C1B31 /* XCRemoteSwiftPackageReference "onnxruntime-swift-package-manager" */;
+			productName = onnxruntime;
+		};
+		6A4E992F2F82164E000C1B31 /* Tokenizers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6A4E992E2F82164E000C1B31 /* XCRemoteSwiftPackageReference "swift-transformers" */;
+			productName = Tokenizers;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

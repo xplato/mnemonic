@@ -5,6 +5,10 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            ModelDownloadView()
+
+            Divider()
+
             HStack {
                 Text("Indexed Directories")
                     .font(.headline)

@@ -1,6 +1,6 @@
 import Foundation
 
-enum BookmarkManager {
+nonisolated enum BookmarkManager {
 
     static func createBookmark(for url: URL) throws -> Data {
         try url.bookmarkData(
