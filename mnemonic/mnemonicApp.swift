@@ -2,12 +2,23 @@ import SwiftUI
 
 @main
 struct MnemonicApp: App {
-  
+
   @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-  
+  @State private var isReady = false
+
   var body: some Scene {
-    // All UI is managed by AppDelegate (status item, search panel, settings window).
-    // This minimal Settings scene satisfies SwiftUI's requirement for at least one scene.
-    Settings { EmptyView() }
+    Settings {
+      Group {
+        if isReady {
+          SettingsView()
+            .environment(appDelegate.directoryStore as DirectoryStore)
+            .environment(appDelegate.modelManager)
+        } else {
+          ProgressView()
+        }
+      }
+      .frame(minWidth: 600, minHeight: 400)
+      .task { isReady = true }
+    }
   }
 }

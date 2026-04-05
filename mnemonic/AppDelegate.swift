@@ -10,7 +10,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
   private var statusItem: NSStatusItem!
   private var searchPanel: SearchPanel?
-  private var settingsWindow: NSWindow?
   
   // Shared state — owned by AppDelegate, injected into views via environment
   let searchController = SearchController()
@@ -29,6 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     setupStatusItem()
     setupSearchPanel()
     setupGlobalShortcut()
+    setupSettingsShortcutMonitor()
     
     // Try to initialize CLIP services (succeeds if models already downloaded)
     Task { await initializeServicesIfNeeded() }
@@ -106,31 +106,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   
   @objc func openSettings() {
     hidePanel()
-
-    if let window = settingsWindow, window.isVisible {
-      window.makeKeyAndOrderFront(nil)
-      NSApp.activate()
-      return
-    }
-    
-    let settingsView = SettingsView()
-      .environment(directoryStore as DirectoryStore)
-      .environment(modelManager)
-    
-    let window = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 600, height: 500),
-      styleMask: [.titled, .closable, .miniaturizable, .resizable],
-      backing: .buffered,
-      defer: false
-    )
-    window.title = "Mnemonic Settings"
-    window.isReleasedWhenClosed = false
-    window.contentView = NSHostingView(rootView: settingsView)
-    window.center()
-    window.makeKeyAndOrderFront(nil)
-    NSApp.activate()
-    
-    settingsWindow = window
+    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+    NSApp.activate(ignoringOtherApps: true)
   }
   
   // MARK: - CLIP Service Initialization
@@ -162,7 +139,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
   }
   
-  // MARK: - Global Keyboard Shortcut
+  // MARK: - Keyboard Shortcuts
+
+  /// Intercept Cmd+, so we always hide the search panel before settings opens.
+  private func setupSettingsShortcutMonitor() {
+    NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+      if event.modifierFlags.contains(.command), event.charactersIgnoringModifiers == "," {
+        self?.hidePanel()
+      }
+      return event // pass through so SwiftUI Settings scene still handles it
+    }
+  }
+
 
   private func setupGlobalShortcut() {
     KeyboardShortcuts.onKeyUp(for: .toggleSearch) { [weak self] in
