@@ -11,18 +11,23 @@ import SwiftUI
 struct MnemonicApp: App {
 
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @State private var directoryStore: DirectoryStore
+
+    init() {
+        let database = try! AppDatabase.makeShared()
+        _directoryStore = State(initialValue: DirectoryStore(database: database))
+    }
 
     var body: some Scene {
         MenuBarExtra("Mnemonic", systemImage: "magnifyingglass") {
-            Button("Toggle Search") {
-                appDelegate.togglePanel()
-            }
-            .keyboardShortcut("f", modifiers: [.command, .shift])
-            Divider()
-            Button("Quit Mnemonic") {
-                NSApplication.shared.terminate(nil)
-            }
-            .keyboardShortcut("q", modifiers: .command)
+            MenuBarView()
+                .environment(directoryStore)
         }
+
+        Window("Mnemonic Settings", id: "settings") {
+            SettingsView()
+                .environment(directoryStore)
+        }
+        .defaultSize(width: 600, height: 400)
     }
 }

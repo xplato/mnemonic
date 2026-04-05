@@ -27,7 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         searchPanel = SearchPanel(contentView: hostingView)
     }
 
-    func togglePanel() {
+    @objc func togglePanel() {
         if searchPanel.isVisible {
             hidePanel()
         } else {

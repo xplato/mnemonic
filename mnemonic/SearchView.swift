@@ -14,7 +14,7 @@ struct SearchView: View {
                 .font(.system(size: 18, weight: .medium))
                 .foregroundStyle(.secondary)
 
-            TextField("Search your files...", text: $query)
+            TextField("Search files...", text: $query)
                 .textFieldStyle(.plain)
                 .font(.system(size: 18))
                 .focused($isSearchFocused)
