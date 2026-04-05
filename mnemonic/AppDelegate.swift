@@ -121,6 +121,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       defer: false
     )
     window.title = "Mnemonic Settings"
+    window.isReleasedWhenClosed = false
     window.contentView = NSHostingView(rootView: settingsView)
     window.center()
     window.makeKeyAndOrderFront(nil)
