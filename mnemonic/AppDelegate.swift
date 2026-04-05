@@ -5,18 +5,31 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var searchPanel: SearchPanel?
+    private var settingsWindow: NSWindow?
     private var hotKeyRef: EventHotKeyRef?
 
-    /// Shared search controller — created eagerly, wired to SearchService later.
+    // Shared state — owned by AppDelegate, injected into views via environment
     let searchController = SearchController()
+    private(set) var database: AppDatabase!
+    private(set) var directoryStore: DirectoryStore!
+    let modelManager = CLIPModelManager()
 
     // MARK: - Lifecycle
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+
+        database = try! AppDatabase.makeShared()
+        directoryStore = DirectoryStore(database: database)
+
         setupSearchPanel()
         registerGlobalHotKey()
+
+        // Try to initialize CLIP services (succeeds if models already downloaded)
+        Task { await initializeServicesIfNeeded() }
     }
+
+    // MARK: - Search Panel
 
     private func setupSearchPanel() {
         let searchView = SearchView(onDismiss: { [weak self] in
@@ -49,13 +62,63 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         searchPanel?.orderOut(nil)
     }
 
+    // MARK: - Settings Window
+
+    @objc func openSettings() {
+        if let window = settingsWindow, window.isVisible {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate()
+            return
+        }
+
+        let settingsView = SettingsView()
+            .environment(directoryStore as DirectoryStore)
+            .environment(modelManager)
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 600, height: 500),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Mnemonic Settings"
+        window.contentView = NSHostingView(rootView: settingsView)
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate()
+
+        settingsWindow = window
+    }
+
+    // MARK: - CLIP Service Initialization
+
+    func initializeServicesIfNeeded() async {
+        modelManager.checkModelsExist()
+        guard modelManager.modelsReady else { return }
+        guard modelManager.indexingService == nil else { return }
+
+        do {
+            let imageEncoder = try CLIPImageEncoder(modelPath: modelManager.visionModelPath)
+            let textEncoder = try await CLIPTextEncoder(
+                modelPath: modelManager.textModelPath,
+                tokenizerFolder: CLIPModelManager.modelsDirectory
+            )
+
+            let idxService = IndexingService(database: database, imageEncoder: imageEncoder)
+            let srchService = SearchService(database: database, textEncoder: textEncoder)
+
+            modelManager.indexingService = idxService
+            searchController.searchService = srchService
+        } catch {
+            print("Failed to initialize CLIP: \(error)")
+        }
+    }
+
     // MARK: - Global Hot Key (Cmd+Shift+Space)
 
     private func registerGlobalHotKey() {
-        // Store a reference to self for the C callback
         let refcon = Unmanaged.passUnretained(self).toOpaque()
 
-        // Install event handler
         var eventType = EventTypeSpec(
             eventClass: OSType(kEventClassKeyboard),
             eventKind: UInt32(kEventHotKeyPressed)
@@ -69,7 +132,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             nil
         )
 
-        // Register Cmd+Shift+Space
         let hotKeyID = EventHotKeyID(
             signature: OSType(0x4D4E454D), // "MNEM"
             id: 1

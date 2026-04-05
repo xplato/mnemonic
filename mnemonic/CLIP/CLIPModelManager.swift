@@ -1,6 +1,32 @@
 import Foundation
 import Observation
 
+/// Tracks download progress via URLSessionDelegate callbacks.
+private final class DownloadProgressDelegate: NSObject, URLSessionDownloadDelegate, Sendable {
+    private let continuation: AsyncStream<(Int64, Int64)>.Continuation
+    private let stream: AsyncStream<(Int64, Int64)>
+
+    override init() {
+        var cont: AsyncStream<(Int64, Int64)>.Continuation!
+        stream = AsyncStream { cont = $0 }
+        continuation = cont
+        super.init()
+    }
+
+    func progressStream() -> AsyncStream<(Int64, Int64)> { stream }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask,
+                    didWriteData bytesWritten: Int64, totalBytesWritten: Int64,
+                    totalBytesExpectedToWrite: Int64) {
+        continuation.yield((totalBytesWritten, totalBytesExpectedToWrite))
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask,
+                    didFinishDownloadingTo location: URL) {
+        continuation.finish()
+    }
+}
+
 @Observable
 final class CLIPModelManager {
 
@@ -8,6 +34,9 @@ final class CLIPModelManager {
     private(set) var downloadProgress: Double = 0
     private(set) var downloadStatus: String = ""
     private(set) var modelsReady = false
+
+    /// Set by AppDelegate once CLIP encoders are initialized.
+    var indexingService: IndexingService?
 
     static let modelsDirectory: URL = {
         let appSupport = FileManager.default.urls(
@@ -97,37 +126,39 @@ final class CLIPModelManager {
     }
 
     private func downloadFile(from url: URL, to destination: URL, fileIndex: Int, totalFiles: Int) async throws {
-        let (asyncBytes, response) = try await URLSession.shared.bytes(from: url)
+        // Use a delegate-based download to track progress
+        let delegate = DownloadProgressDelegate()
+        let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
+        defer { session.invalidateAndCancel() }
 
-        let totalBytes = (response as? HTTPURLResponse)
-            .flatMap { Int64($0.value(forHTTPHeaderField: "Content-Length") ?? "") } ?? 0
+        let label = modelFiles[fileIndex].label
 
-        var data = Data()
-        if totalBytes > 0 {
-            data.reserveCapacity(Int(totalBytes))
-        }
-
-        var downloadedBytes: Int64 = 0
-        let progressUpdateThreshold: Int64 = 1_048_576 // 1MB
-
-        for try await byte in asyncBytes {
-            data.append(byte)
-            downloadedBytes += 1
-
-            if downloadedBytes % progressUpdateThreshold == 0 {
-                let fileProgress = totalBytes > 0 ? Double(downloadedBytes) / Double(totalBytes) : 0
+        // Observe progress from the delegate
+        let progressTask = Task {
+            for await (downloaded, total) in delegate.progressStream() {
+                let fileProgress = total > 0 ? Double(downloaded) / Double(total) : 0
                 let overallProgress = (Double(fileIndex) + fileProgress) / Double(totalFiles)
-                downloadProgress = overallProgress
-
-                if totalBytes > 0 {
-                    let mb = downloadedBytes / 1_048_576
-                    let totalMb = totalBytes / 1_048_576
-                    downloadStatus = "Downloading \(modelFiles[fileIndex].label)... \(mb)/\(totalMb) MB"
+                await MainActor.run {
+                    self.downloadProgress = overallProgress
+                    if total > 0 {
+                        let mb = downloaded / 1_048_576
+                        let totalMb = total / 1_048_576
+                        self.downloadStatus = "Downloading \(label)... \(mb)/\(totalMb) MB"
+                    }
                 }
             }
         }
 
-        try data.write(to: destination)
+        let (tempURL, _) = try await session.download(from: url)
+        progressTask.cancel()
+
+        // Move downloaded file to destination
+        let fm = FileManager.default
+        if fm.fileExists(atPath: destination.path) {
+            try fm.removeItem(at: destination)
+        }
+        try fm.moveItem(at: tempURL, to: destination)
+
         downloadProgress = Double(fileIndex + 1) / Double(totalFiles)
     }
 }

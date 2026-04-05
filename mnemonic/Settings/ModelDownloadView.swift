@@ -21,7 +21,13 @@ struct ModelDownloadView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Button("Download Models") {
-                    Task { try? await modelManager.downloadModels() }
+                    Task {
+                        try? await modelManager.downloadModels()
+                        // Initialize CLIP services now that models are available
+                        if let delegate = NSApp.delegate as? AppDelegate {
+                            await delegate.initializeServicesIfNeeded()
+                        }
+                    }
                 }
             }
 

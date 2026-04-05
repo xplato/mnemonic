@@ -1,8 +1,12 @@
 import SwiftUI
 
 struct IndexingProgressView: View {
-    @Environment(IndexingService.self) private var indexingService: IndexingService?
+    @Environment(CLIPModelManager.self) private var modelManager
     let directory: MnemonicDirectory
+
+    private var indexingService: IndexingService? {
+        modelManager.indexingService
+    }
 
     private var isIndexingThis: Bool {
         guard let indexingService else { return false }

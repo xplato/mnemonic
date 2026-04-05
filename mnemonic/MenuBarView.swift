@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct MenuBarView: View {
-    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         Button("Open Search") {
@@ -10,8 +9,7 @@ struct MenuBarView: View {
         .keyboardShortcut("f", modifiers: [.command, .shift])
         Divider()
         Button("Settings...") {
-            NSApp.activate()
-            openWindow(id: "settings")
+            NSApp.sendAction(#selector(AppDelegate.openSettings), to: nil, from: nil)
         }
         .keyboardShortcut(",", modifiers: .command)
         Divider()
