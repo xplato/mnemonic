@@ -1,27 +1,29 @@
 import SwiftUI
 
 struct SearchView: View {
-  
+
   @State private var query: String = ""
   @FocusState private var isSearchFocused: Bool
   @Environment(SearchController.self) private var searchController
   @Environment(CLIPModelManager.self) private var modelManager
-  
+
   var onDismiss: () -> Void = {}
-  
+  var onHeightChange: (CGFloat) -> Void = { _ in }
+
   private var indexingService: IndexingService? {
     modelManager.indexingService
   }
-  
-  /// Height for the results area.
+
+  /// Current results area height, derived from the shared calculation.
   private var resultsHeight: CGFloat {
-    if searchController.results.isEmpty { return 60 }
-    // ~3 columns in 600px panel, each row ~146px (110 thumb + text + padding)
-    let columns = 3
-    let rows = ceil(Double(searchController.results.count) / Double(columns))
-    return min(CGFloat(rows) * 146 + 20, 400)
+    let total = SearchController.contentHeight(
+      hasSearched: searchController.hasSearched,
+      resultCount: searchController.results.count
+    )
+    // Subtract search bar + divider to get just the results portion
+    return max(0, total - 57)
   }
-  
+
   var body: some View {
     VStack(spacing: 0) {
       // Search bar
@@ -29,17 +31,17 @@ struct SearchView: View {
         Image(systemName: "magnifyingglass")
           .font(.system(size: 18, weight: .medium))
           .foregroundStyle(.secondary)
-        
+
         TextField("Search your files...", text: $query)
           .textFieldStyle(.plain)
           .font(.system(size: 18))
           .focused($isSearchFocused)
-        
+
         if searchController.isSearching {
           ProgressView()
             .scaleEffect(0.6)
         }
-        
+
         // Indexing indicator
         if let indexingService, indexingService.isIndexing {
           Button {
@@ -53,14 +55,18 @@ struct SearchView: View {
       }
       .padding(.horizontal, 16)
       .padding(.vertical, 14)
-      
+
       // Results
       if !searchController.results.isEmpty || searchController.hasSearched {
         Divider()
         SearchResultsView(results: searchController.results)
           .frame(height: resultsHeight)
+          .clipped()
+          .transition(.opacity)
       }
     }
+    .animation(.easeOut(duration: 0.25), value: searchController.hasSearched)
+    .animation(.easeOut(duration: 0.25), value: searchController.results.count)
     .onAppear {
       isSearchFocused = true
     }
@@ -76,7 +82,16 @@ struct SearchView: View {
     .onChange(of: query) { _, newValue in
       searchController.search(query: newValue)
     }
-    
+    .onChange(of: searchController.results.count) { _, newCount in
+      notifyHeightChange(resultCount: newCount, hasSearched: searchController.hasSearched)
+    }
+    .onChange(of: searchController.hasSearched) { _, newValue in
+      notifyHeightChange(resultCount: searchController.results.count, hasSearched: newValue)
+    }
+  }
+
+  private func notifyHeightChange(resultCount: Int, hasSearched: Bool) {
+    onHeightChange(SearchController.contentHeight(hasSearched: hasSearched, resultCount: resultCount))
   }
 }
 

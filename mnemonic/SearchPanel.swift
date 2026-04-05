@@ -46,6 +46,7 @@ final class SearchPanel: NSPanel {
     container.wantsLayer = true
     container.layer?.cornerRadius = cornerRadius
     container.layer?.masksToBounds = true
+    container.clipsToBounds = true
     container.autoresizingMask = [.width, .height]
     container.addSubview(visualEffect)
     container.addSubview(swiftUIView)
@@ -68,15 +69,21 @@ final class SearchPanel: NSPanel {
   func updateHeight(_ contentHeight: CGFloat) {
     let newHeight = min(max(contentHeight, 56), maxPanelHeight)
     guard abs(frame.height - newHeight) > 1 else { return }
-    
-    let newOrigin = NSPoint(
+
+    let topY = frame.origin.y + frame.height
+    let newFrame = NSRect(
       x: frame.origin.x,
-      y: frame.origin.y + frame.height - newHeight
+      y: topY - newHeight,
+      width: panelWidth,
+      height: newHeight
     )
-    setFrame(
-      NSRect(x: newOrigin.x, y: newOrigin.y, width: panelWidth, height: newHeight),
-      display: true,
-      animate: true
-    )
+
+    NSAnimationContext.runAnimationGroup { context in
+      context.duration = 0.25
+      // Deceleration curve — fast start, smooth stop (matches Spotlight feel)
+      context.timingFunction = CAMediaTimingFunction(controlPoints: 0.2, 1.0, 0.3, 1.0)
+      context.allowsImplicitAnimation = true
+      self.animator().setFrame(newFrame, display: true)
+    }
   }
 }
