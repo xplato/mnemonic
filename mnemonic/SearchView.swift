@@ -6,9 +6,10 @@ struct SearchView: View {
   @FocusState private var isSearchFocused: Bool
   @Environment(SearchController.self) private var searchController
   @Environment(CLIPModelManager.self) private var modelManager
+  @Environment(\.openSettings) private var openSettings
 
   var onHeightChange: (CGFloat) -> Void = { _ in }
-  var onOpenSettings: () -> Void = {}
+  var onHidePanel: () -> Void = {}
 
   private var indexingService: IndexingService? {
     modelManager.indexingService
@@ -63,7 +64,8 @@ struct SearchView: View {
           // Indexing indicator
           if let indexingService, indexingService.isIndexing {
             Button {
-              onOpenSettings()
+              onHidePanel()
+              openSettings()
             } label: {
               IndexingIndicator(progress: indexingService.progress)
             }
@@ -73,7 +75,8 @@ struct SearchView: View {
 
           // Settings button
           Button {
-            onOpenSettings()
+            onHidePanel()
+            openSettings()
           } label: {
             Image(systemName: "gearshape")
               .font(.system(size: 14, weight: .medium))
@@ -96,10 +99,9 @@ struct SearchView: View {
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    .animation(.easeOut(duration: 0.25), value: searchController.hasSearched)
-    .animation(.easeOut(duration: 0.25), value: searchController.results.count)
     .onAppear {
       isSearchFocused = true
+      searchController.openSettingsAction = { [openSettings] in openSettings() }
     }
     .onReceive(NotificationCenter.default.publisher(for: .clearSearchQuery)) { _ in
       query = ""

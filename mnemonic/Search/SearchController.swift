@@ -5,6 +5,7 @@ import Observation
 final class SearchController {
   var searchService: SearchService?
   var database: AppDatabase?
+  var openSettingsAction: (() -> Void)?
   private(set) var results: [SearchResult] = []
   private(set) var isSearching = false
   private(set) var hasSearched = false
