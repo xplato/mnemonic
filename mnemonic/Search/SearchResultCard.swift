@@ -12,8 +12,7 @@ struct SearchResultCard: View {
         Image(nsImage: nsImage)
           .resizable()
           .aspectRatio(contentMode: .fill)
-          .frame(height: 110)
-          .clipped()
+          .frame(minWidth: 0, maxWidth: .infinity, minHeight: 110, maxHeight: 110)
           .clipShape(RoundedRectangle(cornerRadius: 6))
       } else {
         RoundedRectangle(cornerRadius: 6)

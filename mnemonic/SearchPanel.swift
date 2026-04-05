@@ -60,8 +60,10 @@ final class SearchPanel: NSPanel {
   func centerOnScreen() {
     guard let screen = NSScreen.main else { return }
     let screenFrame = screen.visibleFrame
-    let x = screenFrame.midX - frame.width / 2
-    let y = screenFrame.midY + screenFrame.height / 6
+    let x = screenFrame.midX - panelWidth / 2
+    // Place the top edge of the panel at upper third of the screen
+    let topY = screenFrame.minY + screenFrame.height * 3 / 4
+    let y = topY - frame.height
     setFrameOrigin(NSPoint(x: x, y: y))
   }
   
@@ -69,7 +71,7 @@ final class SearchPanel: NSPanel {
   func updateHeight(_ contentHeight: CGFloat) {
     let newHeight = min(max(contentHeight, 56), maxPanelHeight)
     guard abs(frame.height - newHeight) > 1 else { return }
-
+    
     let topY = frame.origin.y + frame.height
     let newFrame = NSRect(
       x: frame.origin.x,
@@ -77,7 +79,7 @@ final class SearchPanel: NSPanel {
       width: panelWidth,
       height: newHeight
     )
-
+    
     NSAnimationContext.runAnimationGroup { context in
       context.duration = 0.25
       // Deceleration curve — fast start, smooth stop (matches Spotlight feel)

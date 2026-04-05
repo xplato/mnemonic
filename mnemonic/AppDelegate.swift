@@ -62,16 +62,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     )
       .environment(searchController)
       .environment(modelManager)
-
+    
     let hostingView = NSHostingView(rootView: searchView)
     hostingView.layer?.backgroundColor = .clear
-
+    
     searchPanel = SearchPanel(contentView: hostingView)
   }
   
   @objc func togglePanel() {
     guard let searchPanel else { return }
-    if searchPanel.isVisible {
+    if searchPanel.isKeyWindow {
       hidePanel()
     } else {
       showPanel()
@@ -79,9 +79,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   }
   
   private func showPanel() {
-    searchPanel?.centerOnScreen()
-    searchPanel?.makeKeyAndOrderFront(nil)
-    NSApp.activate()
+    guard let searchPanel else { return }
+    
+    // Reset to clean search-bar-only state
+    searchController.clearResults()
+    
+    // Reset height instantly (no animation) before positioning
+    let resetFrame = NSRect(x: searchPanel.frame.origin.x, y: searchPanel.frame.origin.y,
+                            width: searchPanel.frame.width, height: 56)
+    searchPanel.setFrame(resetFrame, display: false)
+    
+    searchPanel.centerOnScreen()
+    searchPanel.makeKeyAndOrderFront(nil)
+    NSApp.activate(ignoringOtherApps: true)
   }
   
   private func hidePanel() {
