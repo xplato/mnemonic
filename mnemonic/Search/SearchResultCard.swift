@@ -41,6 +41,7 @@ struct SearchResultCard: View {
       }
     }
     .padding(6)
+    .contentShape(Rectangle())
     .background(
       RoundedRectangle(cornerRadius: 8)
         .fill(isHovering ? .white.opacity(0.08) : .clear)
