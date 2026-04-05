@@ -12,7 +12,7 @@ struct ModelDownloadView: View {
         if modelManager.modelsReady {
           Label("Ready", systemImage: "checkmark.circle.fill")
             .foregroundStyle(.green)
-            .font(.caption)
+            .font(.default)
         }
       }
       
