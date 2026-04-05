@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6A17AC982F8299C9002F4666 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 6A17AC972F8299C9002F4666 /* KeyboardShortcuts */; };
 		6A4E99072F82107A000C1B31 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 6A4E99062F82107A000C1B31 /* GRDB */; };
 		6A4E992D2F8215F9000C1B31 /* onnxruntime in Frameworks */ = {isa = PBXBuildFile; productRef = 6A4E992C2F8215F9000C1B31 /* onnxruntime */; };
 		6A4E99302F82164E000C1B31 /* Tokenizers in Frameworks */ = {isa = PBXBuildFile; productRef = 6A4E992F2F82164E000C1B31 /* Tokenizers */; };
@@ -30,6 +31,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6A4E992D2F8215F9000C1B31 /* onnxruntime in Frameworks */,
+				6A17AC982F8299C9002F4666 /* KeyboardShortcuts in Frameworks */,
 				6A4E99072F82107A000C1B31 /* GRDB in Frameworks */,
 				6A4E99302F82164E000C1B31 /* Tokenizers in Frameworks */,
 			);
@@ -77,6 +79,7 @@
 				6A4E99062F82107A000C1B31 /* GRDB */,
 				6A4E992C2F8215F9000C1B31 /* onnxruntime */,
 				6A4E992F2F82164E000C1B31 /* Tokenizers */,
+				6A17AC972F8299C9002F4666 /* KeyboardShortcuts */,
 			);
 			productName = mnemonic;
 			productReference = 6AE6535E2F82085D000FF811 /* mnemonic.app */;
@@ -110,6 +113,7 @@
 				6A4E99052F82107A000C1B31 /* XCRemoteSwiftPackageReference "GRDB.swift" */,
 				6A4E992B2F8215F9000C1B31 /* XCRemoteSwiftPackageReference "onnxruntime-swift-package-manager" */,
 				6A4E992E2F82164E000C1B31 /* XCRemoteSwiftPackageReference "swift-transformers" */,
+				6A17AC962F8299C9002F4666 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6AE6535F2F82085D000FF811 /* Products */;
@@ -344,6 +348,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		6A17AC962F8299C9002F4666 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.0;
+			};
+		};
 		6A4E99052F82107A000C1B31 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDB.swift.git";
@@ -371,6 +383,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		6A17AC972F8299C9002F4666 /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6A17AC962F8299C9002F4666 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
+			productName = KeyboardShortcuts;
+		};
 		6A4E99062F82107A000C1B31 /* GRDB */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 6A4E99052F82107A000C1B31 /* XCRemoteSwiftPackageReference "GRDB.swift" */;

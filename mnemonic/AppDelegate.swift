@@ -1,13 +1,16 @@
 import AppKit
-import Carbon
+import KeyboardShortcuts
 import SwiftUI
 
+extension KeyboardShortcuts.Name {
+  static let toggleSearch = Self("toggleSearch", default: .init(.space, modifiers: [.command, .shift]))
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
-  
+
   private var statusItem: NSStatusItem!
   private var searchPanel: SearchPanel?
   private var settingsWindow: NSWindow?
-  private var hotKeyRef: EventHotKeyRef?
   
   // Shared state — owned by AppDelegate, injected into views via environment
   let searchController = SearchController()
@@ -25,7 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     
     setupStatusItem()
     setupSearchPanel()
-    registerGlobalHotKey()
+    setupGlobalShortcut()
     
     // Try to initialize CLIP services (succeeds if models already downloaded)
     Task { await initializeServicesIfNeeded() }
@@ -159,52 +162,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
   }
   
-  // MARK: - Global Hot Key (Cmd+Shift+Space)
-  
-  private func registerGlobalHotKey() {
-    let refcon = Unmanaged.passUnretained(self).toOpaque()
-    
-    var eventType = EventTypeSpec(
-      eventClass: OSType(kEventClassKeyboard),
-      eventKind: UInt32(kEventHotKeyPressed)
-    )
-    InstallEventHandler(
-      GetApplicationEventTarget(),
-      hotKeyHandler,
-      1,
-      &eventType,
-      refcon,
-      nil
-    )
-    
-    let hotKeyID = EventHotKeyID(
-      signature: OSType(0x4D4E454D), // "MNEM"
-      id: 1
-    )
-    let modifiers: UInt32 = UInt32(cmdKey | shiftKey)
-    let keyCode: UInt32 = 49 // Space
-    
-    RegisterEventHotKey(
-      keyCode,
-      modifiers,
-      hotKeyID,
-      GetApplicationEventTarget(),
-      0,
-      &hotKeyRef
-    )
-  }
-}
+  // MARK: - Global Keyboard Shortcut
 
-// C-function callback for Carbon hot key events
-private func hotKeyHandler(
-  nextHandler: EventHandlerCallRef?,
-  event: EventRef?,
-  userData: UnsafeMutableRawPointer?
-) -> OSStatus {
-  guard let userData else { return OSStatus(eventNotHandledErr) }
-  let delegate = Unmanaged<AppDelegate>.fromOpaque(userData).takeUnretainedValue()
-  DispatchQueue.main.async {
-    delegate.togglePanel()
+  private func setupGlobalShortcut() {
+    KeyboardShortcuts.onKeyUp(for: .toggleSearch) { [weak self] in
+      self?.togglePanel()
+    }
   }
-  return noErr
 }
