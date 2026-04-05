@@ -1,9 +1,14 @@
 import AppKit
 import KeyboardShortcuts
+import Quartz
 import SwiftUI
 
 extension KeyboardShortcuts.Name {
   static let toggleSearch = Self("toggleSearch", default: .init(.space, modifiers: [.command, .shift]))
+}
+
+extension Notification.Name {
+  static let clearSearchQuery = Notification.Name("clearSearchQuery")
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -61,7 +66,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   
   private func setupSearchPanel() {
     let searchView = SearchView(
-      onDismiss: { [weak self] in self?.hidePanel() },
       onHeightChange: { [weak self] height in self?.searchPanel?.updateHeight(height) },
       onOpenSettings: { [weak self] in self?.openSettings() }
     )
@@ -72,6 +76,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     hostingView.layer?.backgroundColor = .clear
     
     searchPanel = SearchPanel(contentView: hostingView)
+    searchPanel?.onEscape = { [weak self] in
+      self?.handleEscape()
+    }
+  }
+  
+  private func handleEscape() {
+    // State 3: detail view → go back to results
+    if searchController.selectedResult != nil {
+      QuickLookCoordinator.shared.dismiss()
+      searchController.deselectResult()
+      return
+    }
+    // State 2: has query → clear query and results
+    if searchController.hasSearched || !searchController.results.isEmpty {
+      searchController.clearResults()
+      // Post notification so SearchView clears its query text field
+      NotificationCenter.default.post(name: .clearSearchQuery, object: nil)
+      return
+    }
+    // State 1: empty search bar → hide panel
+    hidePanel()
   }
   
   @objc func togglePanel() {

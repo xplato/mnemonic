@@ -49,9 +49,7 @@ struct SearchResultCard: View {
       isHovering = hovering
     }
     .onTapGesture {
-      withAnimation(.easeOut(duration: 0.2)) {
-        searchController.selectResult(result)
-      }
+      searchController.selectResult(result)
     }
     .help(result.path)
   }

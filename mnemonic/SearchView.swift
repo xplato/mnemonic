@@ -1,5 +1,4 @@
 import SwiftUI
-import Quartz
 
 struct SearchView: View {
 
@@ -8,7 +7,6 @@ struct SearchView: View {
   @Environment(SearchController.self) private var searchController
   @Environment(CLIPModelManager.self) private var modelManager
 
-  var onDismiss: () -> Void = {}
   var onHeightChange: (CGFloat) -> Void = { _ in }
   var onOpenSettings: () -> Void = {}
 
@@ -38,19 +36,13 @@ struct SearchView: View {
         FileDetailView(
           result: selected,
           database: database,
-          searchService: searchController.searchService, onBack: {
+          searchService: searchController.searchService,
+          onBack: {
             QuickLookCoordinator.shared.dismiss()
-            withAnimation(.easeOut(duration: 0.2)) {
-              searchController.deselectResult()
-            }
+            searchController.deselectResult()
           },
-          onSelectResult: { result in
-            withAnimation(.easeOut(duration: 0.2)) {
-              searchController.selectResult(result)
-            }
-          }
+          onSelectResult: { searchController.selectResult($0) }
         )
-        .transition(.opacity)
       } else {
         // Search bar
         HStack(spacing: 12) {
@@ -108,21 +100,9 @@ struct SearchView: View {
     .onAppear {
       isSearchFocused = true
     }
-    .onKeyPress(.escape) {
-      if isDetailView {
-        QuickLookCoordinator.shared.dismiss()
-        withAnimation(.easeOut(duration: 0.2)) {
-          searchController.deselectResult()
-        }
-        return .handled
-      }
-      if query.isEmpty {
-        onDismiss()
-      } else {
-        query = ""
-        searchController.clearResults()
-      }
-      return .handled
+    .onReceive(NotificationCenter.default.publisher(for: .clearSearchQuery)) { _ in
+      query = ""
+      isSearchFocused = true
     }
     .onChange(of: query) { _, newValue in
       searchController.search(query: newValue)

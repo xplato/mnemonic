@@ -7,6 +7,8 @@ final class SearchPanel: NSPanel {
   private let maxPanelHeight: CGFloat = 600
   private let cornerRadius: CGFloat = 12
   
+  var onEscape: (() -> Void)?
+  
   init(contentView swiftUIView: NSView) {
     super.init(
       contentRect: NSRect(x: 0, y: 0, width: panelWidth, height: 56),
@@ -56,6 +58,19 @@ final class SearchPanel: NSPanel {
   
   override var canBecomeKey: Bool { true }
   override var canBecomeMain: Bool { false }
+  
+  override func cancelOperation(_ sender: Any?) {
+    onEscape?()
+  }
+  
+  override func keyDown(with event: NSEvent) {
+    // Escape is keyCode 53 — route to cancelOperation
+    if event.keyCode == 53 {
+      cancelOperation(nil)
+      return
+    }
+    super.keyDown(with: event)
+  }
   
   func centerOnScreen() {
     guard let screen = NSScreen.main else { return }

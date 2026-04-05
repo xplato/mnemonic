@@ -54,7 +54,7 @@ struct FileDetailView: View {
                 .help("Reveal in Finder")
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.vertical, 14)
             
             Divider()
             
@@ -62,7 +62,7 @@ struct FileDetailView: View {
             HStack(alignment: .top, spacing: 16) {
                 // Image preview (left, ~60%)
                 imagePreview
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                 
                 // Metadata (right, ~40%)
                 metadataPanel
@@ -83,8 +83,6 @@ struct FileDetailView: View {
         }
         .task {
             await loadFileInfo()
-            // Defer heavy embedding work until after the transition animation
-            try? await Task.sleep(for: .milliseconds(300))
             await loadSimilarFiles()
         }
     }
