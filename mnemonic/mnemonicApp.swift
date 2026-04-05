@@ -8,10 +8,21 @@
 import SwiftUI
 
 @main
-struct mnemonicApp: App {
+struct MnemonicApp: App {
+
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+        MenuBarExtra("Mnemonic", systemImage: "magnifyingglass") {
+            Button("Toggle Search") {
+                appDelegate.togglePanel()
+            }
+            .keyboardShortcut("f", modifiers: [.command, .shift])
+            Divider()
+            Button("Quit Mnemonic") {
+                NSApplication.shared.terminate(nil)
+            }
+            .keyboardShortcut("q", modifiers: .command)
         }
     }
 }
