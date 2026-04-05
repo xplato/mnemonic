@@ -36,6 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.hidePanel()
         })
         .environment(searchController)
+        .environment(modelManager)
 
         let hostingView = NSHostingView(rootView: searchView)
         hostingView.layer?.backgroundColor = .clear
@@ -98,11 +99,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard modelManager.indexingService == nil else { return }
 
         do {
-            let imageEncoder = try CLIPImageEncoder(modelPath: modelManager.visionModelPath)
-            let textEncoder = try await CLIPTextEncoder(
-                modelPath: modelManager.textModelPath,
-                tokenizerFolder: CLIPModelManager.modelsDirectory
-            )
+            // Initialize encoders off the main thread (CoreML EP init is heavy)
+            let visionPath = modelManager.visionModelPath
+            let textPath = modelManager.textModelPath
+            let modelsDir = CLIPModelManager.modelsDirectory
+
+            let (imageEncoder, textEncoder) = try await Task.detached {
+                let img = try CLIPImageEncoder(modelPath: visionPath)
+                let txt = try await CLIPTextEncoder(modelPath: textPath, tokenizerFolder: modelsDir)
+                return (img, txt)
+            }.value
 
             let idxService = IndexingService(database: database, imageEncoder: imageEncoder)
             let srchService = SearchService(database: database, textEncoder: textEncoder)

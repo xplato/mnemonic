@@ -16,15 +16,28 @@ struct IndexingProgressView: View {
     var body: some View {
         if let indexingService {
             if isIndexingThis {
-                VStack(alignment: .leading, spacing: 2) {
+                let progress = indexingService.progress
+                VStack(alignment: .leading, spacing: 4) {
                     ProgressView(
-                        value: Double(indexingService.progress.processed),
-                        total: Double(max(indexingService.progress.total, 1))
+                        value: Double(progress.processed),
+                        total: Double(max(progress.total, 1))
                     )
-                    Text(indexingService.progress.status)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+
+                    HStack(spacing: 4) {
+                        Text("\(progress.processed)/\(progress.total)")
+                            .fontWeight(.medium)
+                        Text(progress.status)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
                 }
+            } else if indexingService.isIndexing {
+                // Another directory is being indexed
+                Text("Waiting...")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
             } else {
                 Button("Index Now") {
                     indexingService.indexDirectory(directory)

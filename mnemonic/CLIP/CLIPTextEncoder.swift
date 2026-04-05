@@ -20,11 +20,30 @@ final class CLIPTextEncoder: @unchecked Sendable {
             sessionOptions: nil
         )
 
+        // Patch tokenizer_config.json if needed — CLIP uses standard BPE but
+        // declares "CLIPTokenizer" which swift-transformers doesn't recognize.
+        Self.patchTokenizerConfigIfNeeded(in: tokenizerFolder)
+
         // Load BPE tokenizer from local folder
         self.tokenizer = try await AutoTokenizer.from(modelFolder: tokenizerFolder)
 
         let outputNames = try session.outputNames()
         self.outputName = outputNames.first ?? "text_embeds"
+    }
+
+    /// Replace unsupported "CLIPTokenizer" class with the standard BPE tokenizer class.
+    private nonisolated static func patchTokenizerConfigIfNeeded(in folder: URL) {
+        let configURL = folder.appendingPathComponent("tokenizer_config.json")
+        guard let data = try? Data(contentsOf: configURL),
+              var json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let tokenizerClass = json["tokenizer_class"] as? String,
+              tokenizerClass == "CLIPTokenizer"
+        else { return }
+
+        json["tokenizer_class"] = "PreTrainedTokenizerFast"
+        if let patched = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
+            try? patched.write(to: configURL)
+        }
     }
 
     /// Encode text query → normalized [512] embedding.
