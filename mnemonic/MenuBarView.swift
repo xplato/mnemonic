@@ -2,14 +2,18 @@ import SwiftUI
 
 struct MenuBarView: View {
 
+    private var appDelegate: AppDelegate? {
+        NSApp.delegate as? AppDelegate
+    }
+
     var body: some View {
         Button("Open Search") {
-            NSApp.sendAction(#selector(AppDelegate.togglePanel), to: nil, from: nil)
+            appDelegate?.togglePanel()
         }
         .keyboardShortcut("f", modifiers: [.command, .shift])
         Divider()
         Button("Settings...") {
-            NSApp.sendAction(#selector(AppDelegate.openSettings), to: nil, from: nil)
+            appDelegate?.openSettings()
         }
         .keyboardShortcut(",", modifiers: .command)
         Divider()

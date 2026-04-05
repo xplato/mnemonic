@@ -4,6 +4,7 @@ import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
+    private var statusItem: NSStatusItem!
     private var searchPanel: SearchPanel?
     private var settingsWindow: NSWindow?
     private var hotKeyRef: EventHotKeyRef?
@@ -22,11 +23,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         database = try! AppDatabase.makeShared()
         directoryStore = DirectoryStore(database: database)
 
+        setupStatusItem()
         setupSearchPanel()
         registerGlobalHotKey()
 
         // Try to initialize CLIP services (succeeds if models already downloaded)
         Task { await initializeServicesIfNeeded() }
+    }
+
+    // MARK: - Status Item (Menu Bar)
+
+    private func setupStatusItem() {
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        if let button = statusItem.button {
+            button.image = NSImage(systemSymbolName: "magnifyingglass", accessibilityDescription: "Mnemonic")
+        }
+
+        let menu = NSMenu()
+        menu.addItem(withTitle: "Open Search", action: #selector(togglePanel), keyEquivalent: "")
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "Quit Mnemonic", action: #selector(quitApp), keyEquivalent: "q")
+
+        statusItem.menu = menu
+    }
+
+    @objc private func quitApp() {
+        NSApp.terminate(nil)
     }
 
     // MARK: - Search Panel
