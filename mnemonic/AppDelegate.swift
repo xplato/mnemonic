@@ -71,9 +71,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     )
       .environment(searchController)
       .environment(modelManager)
+      .ignoresSafeArea()
     
     let hostingView = NSHostingView(rootView: searchView)
     hostingView.layer?.backgroundColor = .clear
+    hostingView.safeAreaRegions = []
     
     searchPanel = SearchPanel(contentView: hostingView)
     searchPanel?.onEscape = { [weak self] in

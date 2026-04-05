@@ -54,7 +54,7 @@ struct FileDetailView: View {
                 .help("Reveal in Finder")
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.vertical, 16)
             
             Divider()
             

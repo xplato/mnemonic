@@ -12,7 +12,7 @@ final class SearchPanel: NSPanel {
   init(contentView swiftUIView: NSView) {
     super.init(
       contentRect: NSRect(x: 0, y: 0, width: panelWidth, height: 56),
-      styleMask: [.borderless, .nonactivatingPanel, .fullSizeContentView],
+      styleMask: [.borderless, .nonactivatingPanel],
       backing: .buffered,
       defer: false
     )
@@ -25,8 +25,6 @@ final class SearchPanel: NSPanel {
     hidesOnDeactivate = true
     isMovableByWindowBackground = true
     animationBehavior = .utilityWindow
-    titleVisibility = .hidden
-    titlebarAppearsTransparent = true
     
     let initialFrame = NSRect(x: 0, y: 0, width: panelWidth, height: 56)
     

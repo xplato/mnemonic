@@ -95,6 +95,7 @@ struct SearchView: View {
         }
       }
     }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     .animation(.easeOut(duration: 0.25), value: searchController.hasSearched)
     .animation(.easeOut(duration: 0.25), value: searchController.results.count)
     .onAppear {
