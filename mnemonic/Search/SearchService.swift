@@ -19,6 +19,7 @@ final class SearchService: @unchecked Sendable {
     nonisolated func search(query: String) async throws -> [SearchResult] {
         // 1. Encode query text on background thread
         let queryEmbedding = try textEncoder.encode(text: query)
+        print("[Search] Query embedding: \(queryEmbedding.count) dims, norm=\(sqrt(queryEmbedding.reduce(0) { $0 + $1 * $1 }))")
 
         // 2. Load all embeddings + file info from DB
         let rows: [EmbeddingRow] = try await database.dbQueue.read { db in
@@ -28,21 +29,29 @@ final class SearchService: @unchecked Sendable {
                 JOIN files f ON f.id = e.fileId
                 """)
         }
+        print("[Search] Loaded \(rows.count) embeddings from DB")
 
         // 3. Compute cosine similarity (dot product for L2-normalized vectors)
         var results: [SearchResult] = []
+        var maxScore: Float = -1
+        var dimMismatchCount = 0
 
         for row in rows {
             let fileEmbedding: [Float] = row.embedding.withUnsafeBytes { buffer in
                 Array(buffer.bindMemory(to: Float.self))
             }
 
-            guard fileEmbedding.count == queryEmbedding.count else { continue }
+            guard fileEmbedding.count == queryEmbedding.count else {
+                dimMismatchCount += 1
+                continue
+            }
 
             var rawScore: Float = 0
             for i in 0..<queryEmbedding.count {
                 rawScore += queryEmbedding[i] * fileEmbedding[i]
             }
+
+            if rawScore > maxScore { maxScore = rawScore }
 
             guard rawScore >= Self.minRawScore else { continue }
 
@@ -58,6 +67,7 @@ final class SearchService: @unchecked Sendable {
             ))
         }
 
+        print("[Search] Results: \(results.count)/\(rows.count), maxScore=\(maxScore), dimMismatch=\(dimMismatchCount)")
         results.sort { $0.relevance > $1.relevance }
         return Array(results.prefix(50))
     }

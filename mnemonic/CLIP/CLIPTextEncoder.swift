@@ -51,33 +51,30 @@ final class CLIPTextEncoder: @unchecked Sendable {
         // Tokenize
         let encoded = tokenizer(text)
 
-        // Pad/truncate to 77 tokens
-        var inputIds = encoded.map { Int32($0) }
-        if inputIds.count > maxLength {
-            // Keep start tokens, truncate middle, keep last (EOS)
-            let eos = inputIds.last!
-            inputIds = Array(inputIds.prefix(maxLength - 1)) + [eos]
-        }
-        var attentionMask = Array(repeating: Int32(1), count: inputIds.count)
+        // Pad/truncate to 77 tokens — CLIP ONNX models expect Int64
+        var inputIds = encoded.map { Int64($0) }
+        var attentionMask: [Int64] = Array(repeating: 1, count: inputIds.count)
 
-        // Pad to maxLength
+        inputIds.removeLast(max(0, inputIds.count - maxLength))
+        attentionMask.removeLast(max(0, attentionMask.count - maxLength))
+
         while inputIds.count < maxLength {
             inputIds.append(0)
             attentionMask.append(0)
         }
 
-        // Create tensors
+        // Create tensors with Int64 element type (matching ONNX model expectations)
         let idsData = inputIds.withUnsafeBufferPointer { Data(buffer: $0) }
         let maskData = attentionMask.withUnsafeBufferPointer { Data(buffer: $0) }
 
         let idsTensor = try ORTValue(
             tensorData: NSMutableData(data: idsData),
-            elementType: .int32,
+            elementType: .int64,
             shape: [1, NSNumber(value: maxLength)]
         )
         let maskTensor = try ORTValue(
             tensorData: NSMutableData(data: maskData),
-            elementType: .int32,
+            elementType: .int64,
             shape: [1, NSNumber(value: maxLength)]
         )
 

@@ -13,6 +13,9 @@ final class SearchController {
     func search(query: String) {
         searchTask?.cancel()
 
+        if searchService == nil {
+            print("[Search] searchService is nil — CLIP models may not be initialized yet")
+        }
         guard let service = searchService, !query.trimmingCharacters(in: .whitespaces).isEmpty else {
             results = []
             isSearching = false
@@ -31,6 +34,7 @@ final class SearchController {
                 guard !Task.isCancelled else { return }
                 self.results = r
             } catch {
+                print("[Search] Error searching for '\(query)': \(error)")
                 if !Task.isCancelled {
                     self.results = []
                 }
