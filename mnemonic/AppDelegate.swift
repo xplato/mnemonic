@@ -58,7 +58,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   private func setupSearchPanel() {
     let searchView = SearchView(
       onDismiss: { [weak self] in self?.hidePanel() },
-      onHeightChange: { [weak self] height in self?.searchPanel?.updateHeight(height) }
+      onHeightChange: { [weak self] height in self?.searchPanel?.updateHeight(height) },
+      onOpenSettings: { [weak self] in self?.openSettings() }
     )
       .environment(searchController)
       .environment(modelManager)
@@ -101,6 +102,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   // MARK: - Settings Window
   
   @objc func openSettings() {
+    hidePanel()
+
     if let window = settingsWindow, window.isVisible {
       window.makeKeyAndOrderFront(nil)
       NSApp.activate()

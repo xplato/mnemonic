@@ -14,7 +14,7 @@ struct RelevanceBadge: View {
       .font(.caption2.weight(.medium))
       .padding(.horizontal, 5)
       .padding(.vertical, 2)
-      .background(color.opacity(0.2))
+      .background(color.opacity(0.9))
       .foregroundStyle(color)
       .clipShape(Capsule())
   }

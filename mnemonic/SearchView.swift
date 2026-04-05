@@ -9,6 +9,7 @@ struct SearchView: View {
 
   var onDismiss: () -> Void = {}
   var onHeightChange: (CGFloat) -> Void = { _ in }
+  var onOpenSettings: () -> Void = {}
 
   private var indexingService: IndexingService? {
     modelManager.indexingService
@@ -45,13 +46,24 @@ struct SearchView: View {
         // Indexing indicator
         if let indexingService, indexingService.isIndexing {
           Button {
-            (NSApp.delegate as? AppDelegate)?.openSettings()
+            onOpenSettings()
           } label: {
             IndexingIndicator(progress: indexingService.progress)
           }
           .buttonStyle(.plain)
           .help("Indexing in progress — click to view details")
         }
+
+        // Settings button
+        Button {
+          onOpenSettings()
+        } label: {
+          Image(systemName: "gearshape")
+            .font(.system(size: 14, weight: .medium))
+            .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
+        .help("Settings")
       }
       .padding(.horizontal, 16)
       .padding(.vertical, 14)

@@ -28,7 +28,7 @@ struct SearchResultCard: View {
       // File info
       HStack(spacing: 4) {
         Text(result.filename)
-          .font(.caption)
+          .font(.default)
           .lineLimit(1)
           .truncationMode(.middle)
           .foregroundStyle(isHovering ? .primary : .secondary)
