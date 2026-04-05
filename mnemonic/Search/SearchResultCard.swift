@@ -2,7 +2,6 @@ import SwiftUI
 
 struct SearchResultCard: View {
   let result: SearchResult
-  var heroNamespace: Namespace.ID
   @Environment(SearchController.self) private var searchController
   @State private var isHovering = false
   
@@ -21,7 +20,6 @@ struct SearchResultCard: View {
           }
           .clipShape(RoundedRectangle(cornerRadius: 6))
           .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
-          .matchedGeometryEffect(id: result.id, in: heroNamespace)
       } else {
         RoundedRectangle(cornerRadius: 6)
           .fill(.quaternary)
@@ -31,7 +29,6 @@ struct SearchResultCard: View {
               .font(.title2)
               .foregroundStyle(.secondary)
           }
-          .matchedGeometryEffect(id: result.id, in: heroNamespace)
       }
       
       // File info
@@ -52,7 +49,9 @@ struct SearchResultCard: View {
       isHovering = hovering
     }
     .onTapGesture {
-      searchController.selectResult(result)
+      withAnimation(.easeOut(duration: 0.2)) {
+        searchController.selectResult(result)
+      }
     }
     .help(result.path)
   }

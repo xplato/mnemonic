@@ -5,7 +5,6 @@ struct SearchView: View {
 
   @State private var query: String = ""
   @FocusState private var isSearchFocused: Bool
-  @Namespace private var heroNamespace
   @Environment(SearchController.self) private var searchController
   @Environment(CLIPModelManager.self) private var modelManager
 
@@ -39,14 +38,19 @@ struct SearchView: View {
         FileDetailView(
           result: selected,
           database: database,
-          searchService: searchController.searchService,
-          heroNamespace: heroNamespace,
-          onBack: {
+          searchService: searchController.searchService, onBack: {
             QuickLookCoordinator.shared.dismiss()
-            searchController.deselectResult()
+            withAnimation(.easeOut(duration: 0.2)) {
+              searchController.deselectResult()
+            }
           },
-          onSelectResult: { searchController.selectResult($0) }
+          onSelectResult: { result in
+            withAnimation(.easeOut(duration: 0.2)) {
+              searchController.selectResult(result)
+            }
+          }
         )
+        .transition(.opacity)
       } else {
         // Search bar
         HStack(spacing: 12) {
@@ -92,7 +96,7 @@ struct SearchView: View {
         // Results
         if !searchController.results.isEmpty || searchController.hasSearched {
           Divider()
-          SearchResultsView(results: searchController.results, heroNamespace: heroNamespace)
+          SearchResultsView(results: searchController.results)
             .frame(height: resultsHeight)
             .clipped()
             .transition(.opacity)
@@ -101,14 +105,15 @@ struct SearchView: View {
     }
     .animation(.easeOut(duration: 0.25), value: searchController.hasSearched)
     .animation(.easeOut(duration: 0.25), value: searchController.results.count)
-    .animation(.spring(duration: 0.35, bounce: 0.15), value: isDetailView)
     .onAppear {
       isSearchFocused = true
     }
     .onKeyPress(.escape) {
       if isDetailView {
         QuickLookCoordinator.shared.dismiss()
-        searchController.deselectResult()
+        withAnimation(.easeOut(duration: 0.2)) {
+          searchController.deselectResult()
+        }
         return .handled
       }
       if query.isEmpty {

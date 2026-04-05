@@ -6,7 +6,6 @@ struct FileDetailView: View {
     let result: SearchResult
     let database: AppDatabase
     let searchService: SearchService?
-    var heroNamespace: Namespace.ID
     var onBack: () -> Void = {}
     var onSelectResult: (SearchResult) -> Void = { _ in }
     
@@ -84,6 +83,8 @@ struct FileDetailView: View {
         }
         .task {
             await loadFileInfo()
+            // Defer heavy embedding work until after the transition animation
+            try? await Task.sleep(for: .milliseconds(300))
             await loadSimilarFiles()
         }
     }
@@ -99,7 +100,6 @@ struct FileDetailView: View {
                 .aspectRatio(contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
                 .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 6))
-                .matchedGeometryEffect(id: result.id, in: heroNamespace)
         } else {
             RoundedRectangle(cornerRadius: 6)
                 .fill(.quaternary)
@@ -108,7 +108,6 @@ struct FileDetailView: View {
                         .font(.largeTitle)
                         .foregroundStyle(.secondary)
                 }
-                .matchedGeometryEffect(id: result.id, in: heroNamespace)
         }
     }
     

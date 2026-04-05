@@ -2,7 +2,6 @@ import SwiftUI
 
 struct SearchResultsView: View {
   let results: [SearchResult]
-  var heroNamespace: Namespace.ID
   
   private let columns = [
     GridItem(.adaptive(minimum: 160, maximum: 200), spacing: 6)
@@ -19,7 +18,7 @@ struct SearchResultsView: View {
       } else {
         LazyVGrid(columns: columns, spacing: 6) {
           ForEach(results) { result in
-            SearchResultCard(result: result, heroNamespace: heroNamespace)
+            SearchResultCard(result: result)
           }
         }
         .padding(10)
