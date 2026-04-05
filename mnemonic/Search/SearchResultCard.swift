@@ -13,6 +13,7 @@ struct SearchResultCard: View {
           .resizable()
           .aspectRatio(contentMode: .fill)
           .frame(minWidth: 0, maxWidth: .infinity, minHeight: 110, maxHeight: 110)
+          .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 6))
           .clipShape(RoundedRectangle(cornerRadius: 6))
       } else {
         RoundedRectangle(cornerRadius: 6)
