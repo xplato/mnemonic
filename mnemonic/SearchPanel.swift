@@ -6,7 +6,6 @@ final class SearchPanel: NSPanel {
     private let panelWidth: CGFloat = 600
     private let maxPanelHeight: CGFloat = 500
     private let cornerRadius: CGFloat = 12
-    private var hostingView: NSView?
 
     init(contentView swiftUIView: NSView) {
         super.init(
@@ -42,7 +41,6 @@ final class SearchPanel: NSPanel {
         // SwiftUI hosting view on top
         swiftUIView.frame = initialFrame
         swiftUIView.autoresizingMask = [.width, .height]
-        self.hostingView = swiftUIView
 
         let container = NSView(frame: initialFrame)
         container.wantsLayer = true
@@ -53,15 +51,6 @@ final class SearchPanel: NSPanel {
         container.addSubview(swiftUIView)
 
         contentView = container
-
-        // Observe hosting view's intrinsic content size to resize panel dynamically
-        swiftUIView.postsFrameChangedNotifications = true
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(hostingViewDidResize),
-            name: NSView.frameDidChangeNotification,
-            object: swiftUIView
-        )
     }
 
     override var canBecomeKey: Bool { true }
@@ -75,21 +64,19 @@ final class SearchPanel: NSPanel {
         setFrameOrigin(NSPoint(x: x, y: y))
     }
 
-    @objc private func hostingViewDidResize(_ notification: Notification) {
-        guard let hostingView else { return }
-        let fittingSize = hostingView.fittingSize
-        let newHeight = min(max(fittingSize.height, 56), maxPanelHeight)
+    /// Resize the panel to the given content height, keeping the top edge fixed.
+    func updateHeight(_ contentHeight: CGFloat) {
+        let newHeight = min(max(contentHeight, 56), maxPanelHeight)
+        guard abs(frame.height - newHeight) > 1 else { return }
 
-        if abs(frame.height - newHeight) > 1 {
-            let newOrigin = NSPoint(
-                x: frame.origin.x,
-                y: frame.origin.y + frame.height - newHeight
-            )
-            setFrame(
-                NSRect(x: newOrigin.x, y: newOrigin.y, width: panelWidth, height: newHeight),
-                display: true,
-                animate: false
-            )
-        }
+        let newOrigin = NSPoint(
+            x: frame.origin.x,
+            y: frame.origin.y + frame.height - newHeight
+        )
+        setFrame(
+            NSRect(x: newOrigin.x, y: newOrigin.y, width: panelWidth, height: newHeight),
+            display: true,
+            animate: true
+        )
     }
 }

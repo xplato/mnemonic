@@ -2,39 +2,57 @@ import SwiftUI
 
 struct SearchResultCard: View {
     let result: SearchResult
+    @State private var isHovering = false
 
     var body: some View {
         VStack(spacing: 4) {
+            // Thumbnail
             if let thumbPath = result.thumbnailPath,
                let nsImage = NSImage(contentsOfFile: thumbPath) {
                 Image(nsImage: nsImage)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-                    .frame(width: 160, height: 120)
+                    .frame(height: 110)
                     .clipped()
                     .clipShape(RoundedRectangle(cornerRadius: 6))
             } else {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(.quaternary)
-                    .frame(width: 160, height: 120)
+                    .frame(height: 110)
                     .overlay {
                         Image(systemName: "photo")
+                            .font(.title2)
                             .foregroundStyle(.secondary)
                     }
             }
 
-            HStack {
+            // File info
+            HStack(spacing: 4) {
                 Text(result.filename)
                     .font(.caption)
                     .lineLimit(1)
                     .truncationMode(.middle)
-                Spacer()
+                    .foregroundStyle(isHovering ? .primary : .secondary)
+                Spacer(minLength: 0)
                 RelevanceBadge(relevance: result.relevance)
             }
         }
-        .frame(width: 160)
         .padding(6)
-        .background(.ultraThinMaterial.opacity(0.5))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(isHovering ? .white.opacity(0.08) : .clear)
+        )
+        .onHover { hovering in
+            isHovering = hovering
+        }
+        .onTapGesture {
+            revealInFinder()
+        }
+        .help(result.path)
+    }
+
+    private func revealInFinder() {
+        let url = URL(fileURLWithPath: result.path)
+        NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 }

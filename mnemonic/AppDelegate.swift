@@ -66,6 +66,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hostingView.layer?.backgroundColor = .clear
 
         searchPanel = SearchPanel(contentView: hostingView)
+        observeSearchControllerForResize()
+    }
+
+    /// Observe SearchController state changes to resize the panel dynamically.
+    private func observeSearchControllerForResize() {
+        withObservationTracking {
+            _ = self.searchController.results.count
+            _ = self.searchController.hasSearched
+        } onChange: { [weak self] in
+            DispatchQueue.main.async {
+                self?.resizeSearchPanel()
+                self?.observeSearchControllerForResize()
+            }
+        }
+    }
+
+    private func resizeSearchPanel() {
+        let searchBarHeight: CGFloat = 56
+        var height = searchBarHeight
+
+        if searchController.hasSearched || !searchController.results.isEmpty {
+            height += 1 // Divider
+            if searchController.results.isEmpty {
+                height += 60
+            } else {
+                let columns = 3
+                let rows = ceil(Double(searchController.results.count) / Double(columns))
+                height += min(CGFloat(rows) * 146 + 20, 400)
+            }
+        }
+
+        searchPanel?.updateHeight(height)
     }
 
     @objc func togglePanel() {

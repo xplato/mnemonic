@@ -4,17 +4,25 @@ struct SearchResultsView: View {
     let results: [SearchResult]
 
     private let columns = [
-        GridItem(.adaptive(minimum: 160), spacing: 8)
+        GridItem(.adaptive(minimum: 140, maximum: 180), spacing: 6)
     ]
 
     var body: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(results) { result in
-                    SearchResultCard(result: result)
+            if results.isEmpty {
+                Text("No matching files found")
+                    .foregroundStyle(.tertiary)
+                    .font(.callout)
+                    .padding(.vertical, 24)
+                    .frame(maxWidth: .infinity)
+            } else {
+                LazyVGrid(columns: columns, spacing: 6) {
+                    ForEach(results) { result in
+                        SearchResultCard(result: result)
+                    }
                 }
+                .padding(10)
             }
-            .padding(12)
         }
     }
 }

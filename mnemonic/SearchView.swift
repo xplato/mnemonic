@@ -13,6 +13,15 @@ struct SearchView: View {
         modelManager.indexingService
     }
 
+    /// Height for the results area.
+    private var resultsHeight: CGFloat {
+        if searchController.results.isEmpty { return 60 }
+        // ~3 columns in 600px panel, each row ~146px (110 thumb + text + padding)
+        let columns = 3
+        let rows = ceil(Double(searchController.results.count) / Double(columns))
+        return min(CGFloat(rows) * 146 + 20, 400)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Search bar
@@ -34,7 +43,7 @@ struct SearchView: View {
                 // Indexing indicator
                 if let indexingService, indexingService.isIndexing {
                     Button {
-                        NSApp.sendAction(#selector(AppDelegate.openSettings), to: nil, from: nil)
+                        (NSApp.delegate as? AppDelegate)?.openSettings()
                     } label: {
                         IndexingIndicator(progress: indexingService.progress)
                     }
@@ -46,10 +55,10 @@ struct SearchView: View {
             .padding(.vertical, 14)
 
             // Results
-            if !searchController.results.isEmpty {
+            if !searchController.results.isEmpty || searchController.hasSearched {
                 Divider()
                 SearchResultsView(results: searchController.results)
-                    .frame(maxHeight: 400)
+                    .frame(height: resultsHeight)
             }
         }
         .onAppear {
@@ -67,6 +76,7 @@ struct SearchView: View {
         .onChange(of: query) { _, newValue in
             searchController.search(query: newValue)
         }
+
     }
 }
 

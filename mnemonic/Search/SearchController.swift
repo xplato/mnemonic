@@ -6,6 +6,7 @@ final class SearchController {
     var searchService: SearchService?
     private(set) var results: [SearchResult] = []
     private(set) var isSearching = false
+    private(set) var hasSearched = false
 
     private var searchTask: Task<Void, Never>?
 
@@ -15,6 +16,7 @@ final class SearchController {
         guard let service = searchService, !query.trimmingCharacters(in: .whitespaces).isEmpty else {
             results = []
             isSearching = false
+            hasSearched = false
             return
         }
 
@@ -34,6 +36,7 @@ final class SearchController {
                 }
             }
             self.isSearching = false
+            self.hasSearched = true
         }
     }
 
@@ -41,5 +44,6 @@ final class SearchController {
         searchTask?.cancel()
         results = []
         isSearching = false
+        hasSearched = false
     }
 }
